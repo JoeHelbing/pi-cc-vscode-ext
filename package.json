@@ -1,0 +1,39 @@
+{
+  "name": "pi-cc-vscode-ext",
+  "version": "0.1.0",
+  "description": "Pi extension that exposes VS Code editor context through Claude Code's local IDE bridge.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoeHelbing/pi-cc-vscode-ext.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JoeHelbing/pi-cc-vscode-ext/issues"
+  },
+  "homepage": "https://github.com/JoeHelbing/pi-cc-vscode-ext#readme",
+  "files": [
+    "extensions/",
+    "images/",
+    "README.md"
+  ],
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "vscode",
+    "claude-code",
+    "ide-context"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/claude-ide-vscode.ts"
+    ],
+    "image": "https://raw.githubusercontent.com/JoeHelbing/pi-cc-vscode-ext/main/images/vscode-context-injection-example.png"
+  },
+  "scripts": {
+    "check": "node --check extensions/claude-ide-vscode.ts"
+  }
+}
