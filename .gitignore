@@ -1,7 +1,4 @@
 
-# Local task-tracking/runtime artifacts
-.beads/
-.dolt/
+# Local runtime artifacts
 *.db
-.beads-credential-key
 /tmp/playground/
