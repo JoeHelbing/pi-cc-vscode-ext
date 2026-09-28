@@ -65,6 +65,7 @@ type ExtensionContext = {
   ui: {
     theme?: { fg?: (color: string, text: string) => string };
     setStatus?: (name: string, value: string | undefined) => void;
+    setWidget?: (name: string, lines: string[] | undefined, options?: { placement: 'belowEditor' }) => void;
     notify?: (message: string, level?: 'info' | 'warning' | 'error') => void;
     select?: (title: string, options: string[]) => Promise<string | undefined>;
   };
@@ -470,6 +471,10 @@ function themedStatus(ctx: ExtensionContext, status: VscodeStatus): string {
   return ctx.ui.theme?.fg?.(color, status.line) ?? status.line;
 }
 
+function isPrimeAgent(): boolean {
+  return [process.execPath, process.argv[1]].some((value) => path.basename(value || '').replace(/\.exe$/i, '') === 'prime-agent');
+}
+
 async function queryContext(ctx: ExtensionContext, options: Required<Pick<ExtensionOptions, 'queryTimeoutMs' | 'maxPromptChars'>> & Pick<ExtensionOptions, 'getContext'>): Promise<ClaudeIdeContext> {
   const getContext = options.getContext ?? getClaudeIdeContext;
   return await getContext({ cwd: ctx.cwd, timeoutMs: options.queryTimeoutMs, maxChars: options.maxPromptChars, signal: ctx.signal });
@@ -486,6 +491,16 @@ export function createClaudeIdeVscodeExtension(pi: ExtensionAPI, extensionOption
   let lastStatus: string | undefined;
   let lastInjectedFingerprint: string | undefined;
   let active = true;
+  const useWidget = isPrimeAgent();
+
+  function showStatus(ctx: ExtensionContext, status: VscodeStatus, force = false): void {
+    if (!active || !ctx.hasUI) return;
+    const next = themedStatus(ctx, status);
+    if (next === lastStatus && !force) return;
+    lastStatus = next;
+    if (useWidget && ctx.ui.setWidget) ctx.ui.setWidget('vscode', [next], { placement: 'belowEditor' });
+    else ctx.ui.setStatus?.('vscode', next);
+  }
 
   async function refreshStatus(ctx: ExtensionContext): Promise<VscodeStatus> {
     let status: VscodeStatus;
@@ -496,12 +511,8 @@ export function createClaudeIdeVscodeExtension(pi: ExtensionAPI, extensionOption
       status = statusLineSummary({ ok: false, reason: 'tool_failed' });
     }
 
-    if (!active) return status;
-    const next = themedStatus(ctx, status);
-    if (next !== lastStatus) {
-      lastStatus = next;
-      ctx.ui.setStatus?.('vscode', next);
-    }
+    // Prime can attach its UI after session_start; re-send the widget on each poll.
+    showStatus(ctx, status, useWidget);
     return status;
   }
 
@@ -522,6 +533,7 @@ export function createClaudeIdeVscodeExtension(pi: ExtensionAPI, extensionOption
     if (!active) return undefined;
     try {
       const context = await queryContext(ctx, options);
+      if (useWidget) showStatus(ctx, statusLineSummary(context, { cwd: ctx.cwd }), true);
       const prompt = formatSelectionContext(context, { cwd: ctx.cwd, maxChars: options.maxPromptChars });
       if (!prompt || prompt.startsWith('No VS Code context')) return undefined;
       const fingerprint = fingerprintText(prompt);
@@ -554,7 +566,8 @@ export function createClaudeIdeVscodeExtension(pi: ExtensionAPI, extensionOption
       if (choice === 'Deactivate footer and context injection') {
         active = false;
         lastStatus = undefined;
-        ctx.ui.setStatus?.('vscode', undefined);
+        if (useWidget && ctx.ui.setWidget) ctx.ui.setWidget('vscode', undefined);
+        else ctx.ui.setStatus?.('vscode', undefined);
         ctx.ui.notify?.('VS Code context deactivated for this session.', 'info');
         return;
       }

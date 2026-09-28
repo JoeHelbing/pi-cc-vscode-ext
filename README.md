@@ -14,8 +14,8 @@ your editor.
   Code editor context.
 - Adds a `/vscode` command for viewing bridge status, refreshing state, and
   toggling automatic context injection for the current session.
-- Shows a compact footer status for disconnected, active-file, and selected-line
-  states.
+- Shows a compact footer status in Pi or a widget below the editor in Prime Agent
+  for disconnected, active-file, and selected-line states.
 - Automatically injects changed VS Code context before an agent turn, while
   deduplicating unchanged context by fingerprint.
 - Keeps Claude Code IDE bridge authorization tokens local and out of tool,
@@ -23,7 +23,7 @@ your editor.
 
 ## Requirements
 
-- Pi with package extension support.
+- Pi or Prime Agent with package extension support.
 - Node.js `>=22.18`.
 - VS Code connected through Claude Code's IDE integration.
 
@@ -38,6 +38,8 @@ Install the package with Pi:
 ```bash
 pi install npm:pi-cc-vscode-ext
 ```
+
+In Prime Agent, use `prime-agent package install npm:pi-cc-vscode-ext`.
 
 You can also install directly from a Git checkout or run the extension during
 local development:
@@ -60,9 +62,9 @@ Pi loads the extension through the package manifest:
 
 ## Usage
 
-Start Pi from a workspace that is also open in VS Code through Claude Code. When
-VS Code context is available, Pi automatically injects changed editor context
-before each agent turn.
+Start Pi or Prime Agent from a workspace that is also open in VS Code through
+Claude Code. When VS Code context is available, the extension automatically
+injects changed editor context before each agent turn.
 
 Use the tool from the model when explicit editor context is useful:
 
